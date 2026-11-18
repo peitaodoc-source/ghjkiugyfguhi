@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>旅日手帖｜日式極簡旅遊隨身助手</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Noto Sans TC & Zen Maru Gothic & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons for clean Japanese minimalist line icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans TC"', 'Inter', 'sans-serif'],
+                        display: ['"Zen Maru Gothic"', '"Noto Sans TC"', 'sans-serif'],
+                    },
+                    colors: {
+                        washi: '#F8F7F3',      // 和紙米白背景
+                        sumi: '#2B2B2B',       // 墨黑文字
+                        hai: '#7A7872',        // 灰茶色次要文字
+                        matcha: '#5A735A',     // 抹茶綠 (景點/自然)
+                        terracotta: '#C86D51', // 柿渋橘 (餐廳/美食)
+                        indigo: '#4A647D',     // 藍染青 (交通/導航)
+                        kinari: '#EFECE6',     // 生成色卡片底色
+                        gold: '#B89B5E',       // 金継金 (重要代號/亮點)
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(43, 43, 43, 0.05)',
+                        'float': '0 10px 30px -5px rgba(43, 43, 43, 0.12)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 隱藏滾動條但保持可滾動，營造原生 App 體驗 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        body {
+            background-color: #E8E6E0; /* 桌面端外圍襯底 */
+            color: #2B2B2B;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* 標籤亮顯樣式 */
+        .tag-food {
+            background-color: #FDF2EE;
+            color: #C86D51;
+            border: 1px solid #F5D5C8;
+        }
+        .tag-menu {
+            background-color: #FEF7EC;
+            color: #B47B2B;
+            border: 1px solid #F5E0C3;
+        }
+        .tag-souvenir {
+            background-color: #F0F5F0;
+            color: #4D6B4D;
+            border: 1px solid #D1E0D1;
+        }
+        .tag-code {
+            background-color: #EFF3F7;
+            color: #3E5A75;
+            border: 1px solid #CBD8E6;
+            font-family: 'Inter', monospace;
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-matcha/20">
+
+    <!-- 手機優先容器 (桌面端置中模擬高質感 App 視窗，手機端滿版) -->
+    <div id="app-shell" class="mx-auto max-w-md min-h-screen bg-washi shadow-2xl relative flex flex-col pb-24">
+
+        <!-- 頂部原生感 Header -->
+        <header class="sticky top-0 z-30 bg-washi/90 backdrop-blur-md border-b border-stone-200/70 px-5 pt-5 pb-3">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-[11px] tracking-[0.2em] text-hai uppercase font-medium">KYOTO & OSAKA SELF-DRIVE</p>
+                    <h1 class="text-xl font-display font-bold text-sumi tracking-wide flex items-center gap-2 mt-0.5">
+                        <span>京阪自駕・秋楓紀行</span>
+                        <span class="text-xs font-sans font-normal px-2 py-0.5 rounded-full bg-matcha/10 text-matcha">5日4夜</span>
+                    </h1>
+                </div>
+                <button onclick="openAddModal()" class="w-10 h-10 rounded-full bg-sumi text-washi flex items-center justify-center shadow-soft active:scale-95 transition-transform" aria-label="新增行程">
+                    <i class="ph ph-plus text-lg"></i>
+                </button>
+            </div>
+
+            <!-- 天數橫向選擇器 (僅在行程分頁顯示) -->
+            <div id="day-selector-container" class="mt-4 flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                <!-- 由 JS 動態渲染 Day 1 ~ Day N -->
+            </div>
+        </header>
+
+        <!-- 主內容區塊 -->
+        <main class="flex-1 px-4 pt-4">
+            
+            <!-- ==================== 分頁一：每日行程 ==================== -->
+            <section id="view-itinerary" class="space-y-4">
+                
+                <!-- 1. 當日地點即時天氣預報卡片 -->
+                <div id="weather-banner" class="rounded-2xl bg-gradient-to-br from-[#EFECE6] to-[#E5E1D8] p-4 border border-stone-200/80 shadow-soft flex items-center justify-between">
+                    <!-- JS 動態注入天氣 -->
+                </div>
+
+                <!-- 2. 行程時間軸卡片列表 -->
+                <div id="itinerary-list" class="space-y-4">
+                    <!-- JS 動態注入分類卡片 -->
+                </div>
+
+                <!-- 底部新增提示按鈕 -->
+                <button onclick="openAddModal()" class="w-full py-3.5 rounded-2xl border-2 border-dashed border-stone-300 text-hai hover:text-sumi hover:border-stone-400 transition-colors flex items-center justify-center gap-2 text-sm font-medium mt-2">
+                    <i class="ph ph-plus-circle text-lg"></i>
+                    <span>新增今日行程或貼上文字自動解析</span>
+                </button>
+            </section>
+
+            <!-- ==================== 分頁二：旅途百寶箱 (航班/住宿/緊急/記帳) ==================== -->
+            <section id="view-tools" class="hidden space-y-5">
+                
+                <!-- 工具子分類導覽膠囊 -->
+                <div class="grid grid-cols-4 gap-1.5 bg-kinari p-1.5 rounded-2xl border border-stone-200/70">
+                    <button onclick="switchToolSubTab('flight')" id="subtab-flight" class="tool-subtab py-2 rounded-xl text-xs font-medium transition-all bg-white text-sumi shadow-sm">航班資訊</button>
+                    <button onclick="switchToolSubTab('hotel')" id="subtab-hotel" class="tool-subtab py-2 rounded-xl text-xs font-medium transition-all text-hai">住宿飯店</button>
+                    <button onclick="switchToolSubTab('budget')" id="subtab-budget" class="tool-subtab py-2 rounded-xl text-xs font-medium transition-all text-hai">預算記帳</button>
+                    <button onclick="switchToolSubTab('sos')" id="subtab-sos" class="tool-subtab py-2 rounded-xl text-xs font-medium transition-all text-hai">緊急聯絡</button>
+                </div>
+
+                <!-- 子區塊 A：航班資訊 -->
+                <div id="tool-flight" class="tool-panel space-y-3">
+                    <!-- 去程 -->
+                    <div class="bg-white rounded-2xl p-4 shadow-soft border border-stone-100 relative overflow-hidden">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-indigo/10 text-indigo">去程 OUTBOUND</span>
+                            <span class="text-xs font-mono text-hai">2026/11/20 (五)</span>
+                        </div>
+                        <div class="flex items-center justify-between my-2">
+                            <div>
+                                <div class="text-2xl font-bold font-display text-sumi">KHH</div>
+                                <div class="text-xs text-hai">高雄小港 08:15</div>
+                            </div>
+                            <div class="flex-1 px-4 flex flex-col items-center">
+                                <span class="text-[11px] font-mono text-indigo font-semibold">CI 166</span>
+                                <div class="w-full flex items-center gap-1 my-1">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-indigo"></span>
+                                    <div class="flex-1 h-[1px] border-t border-dashed border-stone-300"></div>
+                                    <i class="ph-fill ph-airplane text-indigo text-sm"></i>
+                                    <div class="flex-1 h-[1px] border-t border-dashed border-stone-300"></div>
+                                    <span class="w-1.5 h-1.5 rounded-full bg-indigo"></span>
+                                </div>
+                                <span class="text-[10px] text-hai">2h 55m</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-2xl font-bold font-display text-sumi">KIX</div>
+                                <div class="text-xs text-hai">關西 T1 12:10</div>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
+                            <span class="text-hai">訂位代號：<strong class="tag-code px-1.5 py-0.5 rounded font-semibold select-all">XJ9K2P</strong></span>
+                            <button onclick="copyText('XJ9K2P')" class="text-indigo hover:underline flex items-center gap-1"><i class="ph ph-copy"></i>複製</button>
+                        </div>
+                    </div>
+
+                    <!-- 回程 -->
+                    <div class="bg-white rounded-2xl p-4 shadow-soft border border-stone-100">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-matcha/10 text-matcha">回程 INBOUND</span>
+                            <span class="text-xs font-mono text-hai">2026/11/24 (二)</span>
+                        </div>
+                        <div class="flex items-center justify-between my-2">
+                            <div>
+                                <div class="text-2xl font-bold font-display text-sumi">KIX</div>
+                                <div class="text-xs text-hai">關西 T1 13:10</div>
+                            </div>
+                            <div class="flex-1 px-4 flex flex-col items-center">
+                                <span class="text-[11px] font-mono text-matcha font-semibold">CI 167</span>
+                                <div class="w-full flex items-center gap-1 my-1">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-matcha"></span>
+                                    <div class="flex-1 h-[1px] border-t border-dashed border-stone-300"></div>
+                                    <i class="ph-fill ph-airplane text-matcha text-sm"></i>
+                                    <div class="flex-1 h-[1px] border-t border-dashed border-stone-300"></div>
+                                    <span class="w-1.5 h-1.5 rounded-full bg-matcha"></span>
+                                </div>
+                                <span class="text-[10px] text-hai">3h 15m</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-2xl font-bold font-display text-sumi">KHH</div>
+                                <div class="text-xs text-hai">高雄小港 15:25</div>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-stone-100 flex items-center justify-between text-xs">
+                            <span class="text-hai">電子機票：<strong class="tag-code px-1.5 py-0.5 rounded font-semibold">297-88410293</strong></span>
+                            <button onclick="copyText('297-88410293')" class="text-matcha hover:underline flex items-center gap-1"><i class="ph ph-copy"></i>複製</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 子區塊 B：住宿資訊 -->
+                <div id="tool-hotel" class="tool-panel hidden space-y-3">
+                    <div class="bg-white rounded-2xl p-4 shadow-soft border border-stone-100 space-y-3">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-[11px] font-medium text-matcha bg-matcha/10 px-2 py-0.5 rounded-full">Day 1 - Day 3 (3晚)</span>
+                                <h3 class="font-bold text-base text-sumi mt-1.5">京都四條河原町 町家別邸</h3>
+                                <p class="text-xs text-hai mt-0.5">京都市下京區寺町通四條下ル</p>
+                            </div>
+                            <button onclick="openNavigation('京都四條河原町', '35.0036,135.7681')" class="px-3 py-2 rounded-xl bg-indigo text-white text-xs font-medium flex items-center gap-1 shadow-sm active:scale-95 transition">
+                                <i class="ph-fill ph-navigation-arrow"></i>導航
+                            </button>
+                        </div>
+                        <div class="bg-washi rounded-xl p-3 text-xs space-y-1.5 border border-stone-200/60">
+                            <div class="flex justify-between">
+                                <span class="text-hai">Check-in / Out</span>
+                                <span class="font-medium">15:00 入住 / 11:00 退房</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-hai">預約確認碼</span>
+                                <span class="tag-code px-2 py-0.5 rounded font-bold cursor-pointer" onclick="copyText('AGD-9948271')">#AGD-9948271</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-hai">自駕 MapCode</span>
+                                <span class="tag-code px-2 py-0.5 rounded font-bold cursor-pointer" onclick="copyText('7 586 412*55')">7 586 412*55</span>
+                            </div>
+                            <div class="pt-1 border-t border-stone-200/60 text-hai">
+                                💡 附設平面合作停車場（夜間上限 ¥1,500），大門密碼鎖：<strong class="text-sumi">4829#</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-4 shadow-soft border border-stone-100 space-y-3">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-[11px] font-medium text-terracotta bg-terracotta/10 px-2 py-0.5 rounded-full">Day 4 (1晚)</span>
+                                <h3 class="font-bold text-base text-sumi mt-1.5">大阪難波 十字酒店 Cross Hotel</h3>
+                                <p class="text-xs text-hai mt-0.5">大阪市中央區心齋橋筋2-5-15</p>
+                            </div>
+                            <button onclick="openNavigation('Cross Hotel Osaka', '34.6698,135.5013')" class="px-3 py-2 rounded-xl bg-indigo text-white text-xs font-medium flex items-center gap-1 shadow-sm active:scale-95 transition">
+                                <i class="ph-fill ph-navigation-arrow"></i>導航
+                            </button>
+                        </div>
+                        <div class="bg-washi rounded-xl p-3 text-xs space-y-1.5 border border-stone-200/60">
+                            <div class="flex justify-between items-center">
+                                <span class="text-hai">預約確認碼</span>
+                                <span class="tag-code px-2 py-0.5 rounded font-bold cursor-pointer" onclick="copyText('BK-7731094')">#BK-7731094</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-hai">自駕 MapCode</span>
+                                <span class="tag-code px-2 py-0.5 rounded font-bold cursor-pointer" onclick="copyText('1 315 882*10')">1 315 882*10</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 子區塊 C：記帳 / 預算表 -->
+                <div id="tool-budget" class="tool-panel hidden space-y-4">
+                    <!-- 總覽卡片 -->
+                    <div class="bg-sumi text-washi rounded-2xl p-4 shadow-soft">
+                        <div class="flex justify-between items-center text-xs text-stone-300">
+                            <span>旅費總預算 (日幣 JPY)</span>
+                            <span>匯率參考 1 JPY ≈ 0.215 TWD</span>
+                        </div>
+                        <div class="mt-2 flex items-baseline justify-between">
+                            <div>
+                                <span class="text-2xl font-bold font-mono" id="budget-spent">¥0</span>
+                                <span class="text-xs text-stone-400 ml-1">/ ¥150,000</span>
+                            </div>
+                            <span class="text-xs px-2.5 py-1 rounded-full bg-white/10 text-stone-200" id="budget-twd">約 NT$ 0</span>
+                        </div>
+                        <!-- 進度條 -->
+                        <div class="w-full h-2 bg-white/15 rounded-full mt-3 overflow-hidden">
+                            <div id="budget-bar" class="h-full bg-terracotta rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- 快速記帳表單 -->
+                    <form onsubmit="addExpense(event)" class="bg-white rounded-2xl p-4 shadow-soft border border-stone-100 space-y-3">
+                        <h4 class="text-xs font-bold text-sumi flex items-center gap-1.5">
+                            <i class="ph-fill ph-receipt text-terracotta"></i> 新增支出紀錄
+                        </h4>
+                        <div class="grid grid-cols-3 gap-2">
+                            <select id="exp-category" class="col-span-1 bg-washi border border-stone-200 rounded-xl px-2.5 py-2.5 text-xs focus:outline-none focus:border-sumi">
+                                <option value="美食">🍜 美食</option>
+                                <option value="交通">🚗 交通/油資</option>
+                                <option value="購物">🛍️ 伴手禮</option>
+                                <option value="門票">⛩️ 門票</option>
+                            </select>
+                            <input type="text" id="exp-title" placeholder="項目名稱 (如: 一蘭拉麵)" required class="col-span-2 bg-washi border border-stone-200 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:border-sumi">
+                        </div>
+                        <div class="flex gap-2">
+                            <div class="relative flex-1">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-hai font-mono">¥</span>
+                                <input type="number" id="exp-amount" placeholder="金額 (JPY)" required min="1" class="w-full bg-washi border border-stone-200 rounded-xl pl-7 pr-3 py-2.5 text-xs font-mono focus:outline-none focus:border-sumi">
+                            </div>
+                            <button type="submit" class="px-5 py-2.5 rounded-xl bg-sumi text-washi text-xs font-medium active:scale-95 transition">記一筆</button>
+                        </div>
+                    </form>
+
+                    <!-- 支出明細列表 -->
+                    <div id="expense-list" class="space-y-2">
+                        <!-- JS 動態渲染 -->
+                    </div>
+                </div>
+
+                <!-- 子區塊 D：緊急聯絡電話 -->
+                <div id="tool-sos" class="tool-panel hidden space-y-3">
+                    <div class="bg-red-50/80 border border-red-200/80 rounded-2xl p-4">
+                        <h3 class="text-sm font-bold text-red-900 flex items-center gap-1.5">
+                            <i class="ph-fill ph-warning-circle text-red-600 text-lg"></i> 日本境內緊急直撥
+                        </h3>
+                        <p class="text-xs text-red-800/80 mt-1">點擊按鈕可直接開啟手機撥號介面</p>
+                        <div class="grid grid-cols-2 gap-2.5 mt-3">
+                            <a href="tel:110" class="bg-white p-3 rounded-xl border border-red-200 flex items-center justify-between shadow-sm active:scale-95 transition">
+                                <div>
+                                    <div class="text-xs text-hai">警察局 / 交通事故</div>
+                                    <div class="text-lg font-bold font-mono text-red-700">110</div>
+                                </div>
+                                <i class="ph-fill ph-phone-call text-red-600 text-xl"></i>
+                            </a>
+                            <a href="tel:119" class="bg-white p-3 rounded-xl border border-red-200 flex items-center justify-between shadow-sm active:scale-95 transition">
+                                <div>
+                                    <div class="text-xs text-hai">火警 / 救護車</div>
+                                    <div class="text-lg font-bold font-mono text-red-700">119</div>
+                                </div>
+                                <i class="ph-fill ph-ambulance text-red-600 text-xl"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-4 shadow-soft border border-stone-100 space-y-3 divide-y divide-stone-100">
+                        <div class="flex items-center justify-between pt-1">
+                            <div>
+                                <div class="text-xs font-bold text-sumi">台北駐大阪經濟文化辦事處</div>
+                                <div class="text-[11px] text-hai mt-0.5">旅外國人急難救助專線 (24小時)</div>
+                            </div>
+                            <a href="tel:+81-90-8794-4568" class="px-3 py-2 rounded-xl bg-sumi text-washi text-xs font-medium flex items-center gap-1">
+                                <i class="ph-fill ph-phone"></i>撥打
+                            </a>
+                        </div>
+                        <div class="flex items-center justify-between pt-3">
+                            <div>
+                                <div class="text-xs font-bold text-sumi">Toyota Rent a Car 事故專線</div>
+                                <div class="text-[11px] text-hai mt-0.5">租車合約編號：<span class="font-mono font-semibold text-sumi">TY-992014</span></div>
+                            </div>
+                            <a href="tel:0120-02-0110" class="px-3 py-2 rounded-xl bg-indigo text-white text-xs font-medium flex items-center gap-1">
+                                <i class="ph-fill ph-car"></i>道路救援
+                            </a>
+                        </div>
+                        <div class="flex items-center justify-between pt-3">
+                            <div>
+                                <div class="text-xs font-bold text-sumi">訪日外國人醫療・旅遊諮詢</div>
+                                <div class="text-[11px] text-hai mt-0.5">JNTO 24小時中文支援熱線</div>
+                            </div>
+                            <a href="tel:050-3816-2787" class="px-3 py-2 rounded-xl bg-matcha text-white text-xs font-medium flex items-center gap-1">
+                                <i class="ph-fill ph-first-aid"></i>諮詢
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+
+        <!-- 底部原生 TabBar -->
+        <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-washi/95 backdrop-blur-md border-t border-stone-200/80 px-6 py-2.5 z-40 flex justify-around items-center">
+            <button onclick="switchMainTab('itinerary')" id="nav-itinerary" class="flex flex-col items-center gap-1 text-sumi transition-colors py-1 px-4">
+                <i class="ph-fill ph-compass text-2xl"></i>
+                <span class="text-[11px] font-bold">每日行程</span>
+            </button>
+            <div class="w-[1px] h-6 bg-stone-200"></div>
+            <button onclick="switchMainTab('tools')" id="nav-tools" class="flex flex-col items-center gap-1 text-hai transition-colors py-1 px-4">
+                <i class="ph ph-suitcase-rolling text-2xl"></i>
+                <span class="text-[11px] font-medium">旅途百寶箱</span>
+            </button>
+        </nav>
+
+        <!-- ==================== 新增行程 / AI 導遊分析 Modal ==================== -->
+        <div id="add-modal" class="fixed inset-0 z-50 hidden bg-sumi/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
+            <div class="bg-washi w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl border border-stone-200 max-h-[90vh] overflow-y-auto">
+                <div class="flex items-center justify-between pb-3 border-b border-stone-200">
+                    <h3 class="font-display font-bold text-lg text-sumi flex items-center gap-2">
+                        <i class="ph-fill ph-sparkle text-gold"></i> 新增行程 & AI 導遊解析
+                    </h3>
+                    <button onclick="closeAddModal()" class="w-8 h-8 rounded-full bg-stone-200/70 flex items-center justify-center text-sumi">
+                        <i class="ph ph-x"></i>
+                    </button>
+                </div>
+
+                <form onsubmit="handleAddItinerary(event)" class="mt-4 space-y-3.5">
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <div>
+                            <label class="block text-[11px] font-medium text-hai mb-1">行程類型</label>
+                            <select id="new-type" class="w-full bg-white border border-stone-200 rounded-xl px-3 py-2.5 text-xs font-medium">
+                                <option value="spot">⛩️ 景點名勝</option>
+                                <option value="food">🍜 餐廳美食</option>
+                                <option value="transport">🚗 交通自駕</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-medium text-hai mb-1">預計時間</label>
+                            <input type="time" id="new-time" value="14:30" required class="w-full bg-white border border-stone-200 rounded-xl px-3 py-2.5 text-xs font-mono">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-medium text-hai mb-1">地點名稱 (自動產生自駕導航)</label>
+                        <input type="text" id="new-location" placeholder="例如：宇治平等院、敘敘苑燒肉" required class="w-full bg-white border border-stone-200 rounded-xl px-3 py-2.5 text-xs">
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-medium text-hai mb-1">行程備註或貼上筆記 (AI 自動標記重點)</label>
+                        <textarea id="new-note" rows="3" placeholder="貼上隨手筆記，例如：預約代號 #UV882，必吃抹茶聖代，必買中村藤吉茶葉..." class="w-full bg-white border border-stone-200 rounded-xl p-3 text-xs leading-relaxed"></textarea>
+                    </div>
+
+                    <div class="bg-kinari/80 p-3 rounded-xl border border-stone-200/80 flex items-center justify-between">
+                        <div class="text-xs">
+                            <span class="font-bold text-sumi">啟用 AI 導遊深度搜尋</span>
+                            <p class="text-[11px] text-hai">自動補充景點歷史故事、必點菜單與伴手禮</p>
+                        </div>
+                        <input type="checkbox" id="use-ai-guide" checked class="w-4 h-4 accent-matcha rounded">
+                    </div>
+
+                    <button type="submit" id="submit-itinerary-btn" class="w-full py-3.5 rounded-xl bg-sumi text-washi text-sm font-medium shadow-soft active:scale-98 transition flex items-center justify-center gap-2">
+                        <span>加入行程並生成導遊攻略</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ==================== 輕量提示 Toast ==================== -->
+        <div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 hidden bg-sumi text-washi text-xs px-4 py-2.5 rounded-full shadow-float flex items-center gap-2 transition-opacity">
+            <i class="ph-fill ph-check-circle text-matcha text-base"></i>
+            <span id="toast-msg">已複製到剪貼簿</span>
+        </div>
+
+    </div>
+
+    <script>
+        // ==================== 1. 初始行程與狀態資料 ====================
+        const tripData = [
+            {
+                day: 1,
+                date: "11/20 (五)",
+                city: "京都・嵐山與市區",
+                weather: { temp: "14°C", range: "9° - 16°C", desc: "晴時多雲・紅葉見頃", icon: "ph-sun-horizon", rain: "10%" },
+                items: [
+                    {
+                        id: "d1-1",
+                        type: "transport",
+                        time: "13:00",
+                        title: "關西機場取車 → 前往京都",
+                        location: "Toyota Rent a Car 關西機場店",
+                        mapCode: "1 315 882*10",
+                        coords: "34.4347,135.2442",
+                        rawNote: "預約代號 #TY-992014，領取 ETC 卡片與確認車身保險，走阪神高速轉名神高速約 85 分鐘。",
+                        story: "【自駕小叮嚀】日本為右駕靠左行駛，雨刷與方向燈位置與台灣相反。上高速公路請走紫色「ETC專用」車道並減速至 20km/h 以下。",
+                        highlights: {
+                            codes: ["#TY-992014"],
+                            foods: [],
+                            menus: [],
+                            souvenirs: []
+                        }
+                    },
+                    {
+                        id: "d1-2",
+                        type: "spot",
+                        time: "15:15",
+                        title: "嵐山渡月橋 & 竹林小徑",
+                        location: "嵐山渡月橋",
+                        mapCode: "7 583 221*44",
+                        coords: "35.0129,135.6777",
+                        rawNote: "建議停在嵐山公園周邊停車場，散步至竹林小徑拍攝黃昏光影，順路買 % Arabica 咖啡。",
+                        story: "【導遊說故事】渡月橋建於平安時代，龜山上皇某夜見明月緩緩移過橋上，讚嘆「似滿月過橋」而得名。秋日嵐山滿山楓紅與桂川碧水相映，是京都最具代表性的絕景。",
+                        highlights: {
+                            codes: [],
+                            foods: ["% Arabica 京都嵐山店", "古都芋本舖 炙燒醬油糰子"],
+                            menus: ["京都拿鐵 (Kyoto Latte)", "四層霜淇淋"],
+                            souvenirs: ["老松 夏柑糖", "嵐山限定柚子七味粉"]
+                        }
+                    },
+                    {
+                        id: "d1-3",
+                        type: "food",
+                        time: "18:30",
+                        title: "京懷石・豆腐料理 嵯峨野",
+                        location: "湯豆腐 嵯峨野",
+                        mapCode: "7 583 490*12",
+                        coords: "35.0145,135.6752",
+                        rawNote: "已預訂庭園景觀包廂，預約代號 #SAGA-1120，必點經典湯豆腐套餐。",
+                        story: "【導遊攻略】京都水質軟潤甘甜，造就了細膩如絲的京豆腐文化。嵯峨野擁有枯山水日式庭園，夜晚點燈後用餐氛圍極佳。",
+                        highlights: {
+                            codes: ["#SAGA-1120"],
+                            foods: ["嵯峨野湯豆腐", "胡麻豆腐"],
+                            menus: ["湯豆腐定食 (¥4,200)", "季節八寸料理"],
+                            souvenirs: ["嵯峨野特製柚子味噌"]
+                        }
+                    }
+                ]
+            },
+            {
+                day: 2,
+                date: "11/21 (六)",
+                city: "京都・東山古都巡禮",
+                weather: { temp: "13°C", range: "8° - 15°C", desc: "微涼晴朗・適合步行", icon: "ph-sun", rain: "0%" },
+                items: [
+                    {
+                        id: "d2-1",
+                        type: "spot",
+                        time: "08:30",
+                        title: "清水寺 & 二年坂・三年坂",
+                        location: "清水寺",
+                        mapCode: "7 526 883*11",
+                        coords: "34.9949,135.7850",
+                        rawNote: "早起避開人潮！自駕可停京都市清水坂觀光停車場。參拜完順路逛三年坂。",
+                        story: "【導遊說故事】清水寺正殿前方的「清水舞台」完全未用一根釘子，以 139 根巨型櫸木縱橫交錯支撐，懸空於錦雲溪懸崖之上，展現日本傳統木造建築的極致工藝。",
+                        highlights: {
+                            codes: [],
+                            foods: ["藤菜美 醬油糰子", "阿闍梨餅本舖"],
+                            menus: ["現烤醬油丸子", "洛水抹茶飲"],
+                            souvenirs: ["七味家本舖 七味粉", "生八橋 (夕子抹茶口味)", "阿闍梨餅"]
+                        }
+                    },
+                    {
+                        id: "d2-2",
+                        type: "food",
+                        time: "12:30",
+                        title: "祇園 鰻魚飯名店「う桶や う」",
+                        location: "祇園 う桶や う",
+                        mapCode: "7 556 710*85",
+                        coords: "35.0048,135.7745",
+                        rawNote: "米其林一星鰻魚飯！預約代號 #UNAGI-88，必點招牌木桶鰻魚飯（三人份）。",
+                        story: "【導遊攻略】隱身於祇園花見小路石板巷弄中的百年町家，採用關西風直火炭烤，外皮酥脆焦香、肉質鬆軟，搭配檜木桶盛裝香氣四溢。",
+                        highlights: {
+                            codes: ["#UNAGI-88"],
+                            foods: ["炭烤木桶鰻魚飯", "鰻魚肝清湯"],
+                            menus: ["う桶 (木桶鰻魚飯)", "白燒鰻魚"],
+                            souvenirs: ["花見小路 祇園辻利抹茶捲心酥"]
+                        }
+                    },
+                    {
+                        id: "d2-3",
+                        type: "spot",
+                        time: "17:30",
+                        title: "永觀堂 禪林寺・夜楓點燈",
+                        location: "永觀堂禪林寺",
+                        mapCode: "7 617 205*30",
+                        coords: "35.0145,135.7955",
+                        rawNote: "自古有「秋之永觀堂」美譽，夜間拜觀 17:30 準時開放入場，放生池倒影絕美。",
+                        story: "【導遊說故事】寺內供奉著名的「回首阿彌陀如來像」，佛像頭部向左後方回望，象徵著佛陀等待遲緩眾生、慈悲關懷的深意。",
+                        highlights: {
+                            codes: [],
+                            foods: ["南禪寺順正 湯葉料理"],
+                            menus: ["放生池極樂橋倒影拍攝點"],
+                            souvenirs: ["永觀堂限定 楓葉御守"]
+                        }
+                    }
+                ]
+            },
+            {
+                day: 3,
+                date: "11/22 (日)",
+                city: "宇治茶鄉 → 大阪難波",
+                weather: { temp: "15°C", range: "10° - 17°C", desc: "多雲時晴・舒適宜人", icon: "ph-cloud-sun", rain: "20%" },
+                items: [
+                    {
+                        id: "d3-1",
+                        type: "spot",
+                        time: "10:00",
+                        title: "宇治平等院 & 鳳凰堂",
+                        location: "平等院",
+                        mapCode: "7 137 528*66",
+                        coords: "34.8893,135.8077",
+                        rawNote: "記得準備一枚日幣 10 元硬幣與鳳凰堂合照！鳳凰堂內部參觀需現場抽整理券。",
+                        story: "【導遊說故事】建於 1053 年，藤原賴通將父親的別墅改建為佛寺，試圖在人間重現西方極樂淨土。建築宛如展翅欲飛的鳳凰，印製於日本 10 円硬幣背面。",
+                        highlights: {
+                            codes: [],
+                            foods: ["中村藤吉本店", "伊藤久右衛門"],
+                            menus: ["生茶ゼリイ (竹筒抹茶凍)", "宇治抹茶蕎麥麵"],
+                            souvenirs: ["中村藤吉 玉露茶葉", "宇治抹茶咖哩包"]
+                        }
+                    },
+                    {
+                        id: "d3-2",
+                        type: "transport",
+                        time: "15:00",
+                        title: "自駕前往大阪市區・難波還車",
+                        location: "Toyota Rent a Car 難波站前店",
+                        mapCode: "1 315 612*40",
+                        coords: "34.6644,135.5005",
+                        rawNote: "還車前請在難波周邊 ENEOS 加油站加滿 Regular (紅色油槍) 並保留收據。",
+                        story: "【自駕小叮嚀】日本租車採「滿油還車」制，還車前 3 公里內加油最為標準，結帳時向店員出示加油收據即可快速完成點交。",
+                        highlights: {
+                            codes: ["#TY-992014"],
+                            foods: [],
+                            menus: ["加滿 Regular 汽油 (紅色油槍)"],
+                            souvenirs: []
+                        }
+                    },
+                    {
+                        id: "d3-3",
+                        type: "food",
+                        time: "19:00",
+                        title: "黑毛和牛燒肉「松阪牛燒肉 M」",
+                        location: "松阪牛焼肉 M 法善寺横丁店",
+                        mapCode: "1 315 880*22",
+                        coords: "34.6681,135.5028",
+                        rawNote: "預約代號 #MATSU-22，位置在充滿昭和風情的法善寺橫丁石板路旁。",
+                        story: "【導遊攻略】嚴選整頭買入的最高等級 A5 松阪牛，油花如霜降般細緻，入口即化。餐後可順道參拜一旁長滿青苔的「水掛不動尊」。",
+                        highlights: {
+                            codes: ["#MATSU-22"],
+                            foods: ["A5松阪牛特選拼盤", "和牛炙燒壽司"],
+                            menus: ["松阪牛極上六種盛合", "松露和牛石鍋拌飯"],
+                            souvenirs: ["法善寺橫丁 夫婦善哉紅豆湯包"]
+                        }
+                    }
+                ]
+            }
+        ];
+
+        let expenses = [
+            { id: 1, category: "交通", title: "關西機場 ETC 過路費儲值", amount: 5000 },
+            { id: 2, category: "美食", title: "嵐山 % Arabica 咖啡", amount: 1350 },
+            { id: 3, category: "門票", title: "清水寺夜間參拜券 x2", amount: 1000 }
+        ];
+
+        let currentDayIndex = 0;
+
+        // ==================== 2. 核心渲染邏輯 ====================
+        function initApp() {
+            renderDayTabs();
+            renderItineraryView();
+            renderExpenses();
+        }
+
+        // 渲染頂部天數切換鈕
+        function renderDayTabs() {
+            const container = document.getElementById('day-selector-container');
+            container.innerHTML = tripData.map((d, idx) => {
+                const isActive = idx === currentDayIndex;
+                return `
+                    <button onclick="selectDay(${idx})" 
+                        class="shrink-0 px-4 py-2 rounded-2xl text-xs transition-all flex flex-col items-start border ${
+                            isActive 
+                            ? 'bg-sumi text-washi border-sumi shadow-sm' 
+                            : 'bg-white/80 text-hai border-stone-200/80 hover:bg-white'
+                        }">
+                        <span class="font-bold font-display text-sm">Day ${d.day}</span>
+                        <span class="text-[10px] opacity-80 mt-0.5">${d.date}</span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function selectDay(index) {
+            currentDayIndex = index;
+            renderDayTabs();
+            renderItineraryView();
+        }
+
+        // 渲染當日天氣與所有分類行程卡片
+        function renderItineraryView() {
+            const dayObj = tripData[currentDayIndex];
+            
+            // 1. 渲染天氣橫幅
+            const weatherBanner = document.getElementById('weather-banner');
+            weatherBanner.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-white/80 flex items-center justify-center text-terracotta shadow-xs">
+                        <i class="ph-fill ${dayObj.weather.icon} text-2xl"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-xs font-bold text-sumi">${dayObj.city}</span>
+                            <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/70 text-hai">降雨 ${dayObj.weather.rain}</span>
+                        </div>
+                        <p class="text-xs text-hai mt-0.5">${dayObj.weather.desc}</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-xl font-bold font-mono text-sumi">${dayObj.weather.temp}</div>
+                    <div class="text-[10px] font-mono text-hai">${dayObj.weather.range}</div>
+                </div>
+            `;
+
+            // 2. 渲染行程卡片
+            const listContainer = document.getElementById('itinerary-list');
+            listContainer.innerHTML = dayObj.items.map(item => {
+                // 依據類別決定視覺色彩與圖示
+                const typeConfig = {
+                    spot: {
+                        label: '景點名勝',
+                        badgeBg: 'bg-matcha/10 text-matcha',
+                        borderAccent: 'border-l-4 border-l-matcha',
+                        icon: 'ph-torii-gate'
+                    },
+                    food: {
+                        label: '餐廳美食',
+                        badgeBg: 'bg-terracotta/10 text-terracotta',
+                        borderAccent: 'border-l-4 border-l-terracotta',
+                        icon: 'ph-bowl-food'
+                    },
+                    transport: {
+                        label: '交通自駕',
+                        badgeBg: 'bg-indigo/10 text-indigo',
+                        borderAccent: 'border-l-4 border-l-indigo',
+                        icon: 'ph-car-profile'
+                    }
+                }[item.type];
+
+                // 組合導遊重點亮顯標籤
+                const highlightTagsHTML = buildHighlightTags(item.highlights);
+
+                return `
+                    <article class="bg-white rounded-2xl p-4 shadow-soft border border-stone-100 ${typeConfig.borderAccent} transition-all">
+                        <!-- 卡片頂部：時間 + 類型標籤 + 自駕導航按鈕 -->
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-bold font-mono text-sumi bg-washi px-2.5 py-1 rounded-lg border border-stone-200/70">${item.time}</span>
+                                <span class="text-[11px] font-medium px-2.5 py-1 rounded-full ${typeConfig.badgeBg} flex items-center gap-1">
+                                    <i class="ph-fill ${typeConfig.icon}"></i>
+                                    ${typeConfig.label}
+                                </span>
+                            </div>
+                            
+                            <!-- 自動偵測地點並產生的自駕導航按鈕 -->
+                            <button onclick="openNavigation('${item.location.replace(/'/g, "\\'")}', '${item.coords || ''}')" 
+                                class="px-3 py-1.5 rounded-xl bg-indigo text-white text-xs font-medium flex items-center gap-1.5 shadow-xs active:scale-95 transition-transform shrink-0">
+                                <i class="ph-fill ph-navigation-arrow text-sm"></i>
+                                <span>自駕導航</span>
+                            </button>
+                        </div>
+
+                        <!-- 標題與地點 / MapCode -->
+                        <div class="mt-3">
+                            <h3 class="text-base font-bold text-sumi leading-snug">${item.title}</h3>
+                            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-hai">
+                                <span class="flex items-center gap-1">
+                                    <i class="ph-fill ph-map-pin text-terracotta"></i> ${item.location}
+                                </span>
+                                ${item.mapCode ? `
+                                    <button onclick="copyText('${item.mapCode}')" class="flex items-center gap-1 text-[11px] font-mono bg-washi px-2 py-0.5 rounded border border-stone-200 hover:border-indigo text-sumi" title="點擊複製車用 MapCode">
+                                        <span>MC: ${item.mapCode}</span>
+                                        <i class="ph ph-copy text-hai"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        <!-- 原始筆記內容 (自動高亮關鍵字) -->
+                        <p class="mt-2.5 text-xs text-sumi/85 leading-relaxed bg-washi/70 p-2.5 rounded-xl border border-stone-200/50">
+                            ${highlightInlineText(item.rawNote)}
+                        </p>
+
+                        <!-- AI 導遊故事與分類亮點區 -->
+                        <div class="mt-3 pt-3 border-t border-stone-100 space-y-2.5">
+                            <div class="text-xs text-hai leading-relaxed flex items-start gap-1.5">
+                                <i class="ph-fill ph-sparkle text-gold text-sm shrink-0 mt-0.5"></i>
+                                <span>${item.story}</span>
+                            </div>
+
+                            ${highlightTagsHTML}
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        // 將「必吃美食」、「必點菜單」、「必買伴手禮」、「重要預約代號」渲染為不同顏色標籤
+        function buildHighlightTags(hl) {
+            if (!hl) return '';
+            let blocks = [];
+
+            if (hl.codes && hl.codes.length > 0) {
+                blocks.push(`
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <span class="text-[10px] font-bold text-indigo">🔑 預約代號：</span>
+                        ${hl.codes.map(c => `<span onclick="copyText('${c}')" class="tag-code text-[11px] font-bold px-2 py-0.5 rounded-md cursor-pointer">${c}</span>`).join('')}
+                    </div>
+                `);
+            }
+            if (hl.foods && hl.foods.length > 0) {
+                blocks.push(`
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <span class="text-[10px] font-bold text-terracotta">🍽️ 必吃美食：</span>
+                        ${hl.foods.map(f => `<span class="tag-food text-[11px] font-medium px-2 py-0.5 rounded-md">${f}</span>`).join('')}
+                    </div>
+                `);
+            }
+            if (hl.menus && hl.menus.length > 0) {
+                blocks.push(`
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <span class="text-[10px] font-bold text-amber-700">📋 必點推薦：</span>
+                        ${hl.menus.map(m => `<span class="tag-menu text-[11px] font-medium px-2 py-0.5 rounded-md">${m}</span>`).join('')}
+                    </div>
+                `);
+            }
+            if (hl.souvenirs && hl.souvenirs.length > 0) {
+                blocks.push(`
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <span class="text-[10px] font-bold text-matcha">🎁 必買伴手禮：</span>
+                        ${hl.souvenirs.map(s => `<span class="tag-souvenir text-[11px] font-medium px-2 py-0.5 rounded-md">${s}</span>`).join('')}
+                    </div>
+                `);
+            }
+
+            return blocks.length > 0 ? `<div class="space-y-1.5 pt-1">${blocks.join('')}</div>` : '';
+        }
+
+        // 自動偵測行內預約代號並粗體亮顯
+        function highlightInlineText(text) {
+            return text.replace(/(#[A-Za-z0-9\-]+)/g, '<strong class="tag-code px-1.5 py-0.2 rounded font-bold">$1</strong>');
+        }
+
+        // ==================== 3. 自駕導航功能 ====================
+        function openNavigation(locationName, coords) {
+            // 優先使用 Google Maps 導航 URL Scheme，支援手機 App 直接喚起自駕模式
+            const query = encodeURIComponent(locationName);
+            const url = `https://www.google.com/maps/dir/?api=1&destination=${query}&travelmode=driving`;
+            showToast(`正在開啟「${locationName}」自駕導航...`);
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+
+        // ==================== 4. 新增行程與 AI 導遊分析 ====================
+        function openAddModal() {
+            document.getElementById('add-modal').classList.remove('hidden');
+        }
+
+        function closeAddModal() {
+            document.getElementById('add-modal').classList.add('hidden');
+        }
+
+        async function handleAddItinerary(e) {
+            e.preventDefault();
+            const type = document.getElementById('new-type').value;
+            const time = document.getElementById('new-time').value;
+            const location = document.getElementById('new-location').value.trim();
+            const rawNote = document.getElementById('new-note').value.trim() || `前往 ${location}`;
+            const useAI = document.getElementById('use-ai-guide').checked;
+            const btn = document.getElementById('submit-itinerary-btn');
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="ph ph-spinner animate-spin text-lg"></i><span>AI 導遊正在搜尋故事與分析重點...</span>`;
+
+            let guideResult = {
+                story: `【導遊筆記】已為您將「${location}」加入行程，建議提前確認當地停車場與營業時間。`,
+                highlights: extractLocalKeywords(rawNote)
+            };
+
+            if (useAI) {
+                try {
+                    guideResult = await fetchAIGuideInsights(location, rawNote);
+                } catch (err) {
+                    // 若環境無 API 金鑰或離線時，優雅降級使用本地智慧規則解析
+                    guideResult = fallbackSmartAnalysis(location, rawNote);
+                }
+            } else {
+                guideResult = fallbackSmartAnalysis(location, rawNote);
+            }
+
+            tripData[currentDayIndex].items.push({
+                id: 'custom-' + Date.now(),
+                type,
+                time,
+                title: location,
+                location: location,
+                mapCode: "",
+                coords: "",
+                rawNote: rawNote,
+                story: guideResult.story,
+                highlights: guideResult.highlights
+            });
+
+            // 依時間排序
+            tripData[currentDayIndex].items.sort((a, b) => a.time.localeCompare(b.time));
+
+            btn.disabled = false;
+            btn.innerHTML = `<span>加入行程並生成導遊攻略</span>`;
+            document.getElementById('new-location').value = '';
+            document.getElementById('new-note').value = '';
+            closeAddModal();
+            renderItineraryView();
+            showToast('已加入行程並完成 AI 導遊重點標記！');
+        }
+
+        // 呼叫 Gemini API (含 Google Search Grounding) 進行真實景點故事與美食分析
+        async function fetchAIGuideInsights(location, note) {
+            const apiKey = ""; // Runtime 自動注入
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            const prompt = `你是一位專業的日本自駕旅遊導遊。請搜尋「${location}」的歷史故事或特色攻略，並結合使用者的備註：「${note}」，整理出以下資訊。
+請務必只回傳純 JSON 格式（不要有 markdown 標記），欄位如下：
+{
+  "story": "一段約60-80字的繁體中文景點故事或實用攻略，開頭加上【導遊說故事】或【導遊攻略】",
+  "codes": ["從備註提取的預約代號，若無則空陣列"],
+  "foods": ["該地點必吃美食1", "必吃美食2"],
+  "menus": ["必點招牌菜單或看點1", "必點2"],
+  "souvenirs": ["必買伴手禮1", "必買2"]
+}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                tools: [{ "google_search": {} }]
+            };
+
+            const res = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) throw new Error('API request failed');
+            const data = await res.json();
+            const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            const cleanJson = rawText.replace(/```json|```/g, '').trim();
+            const parsed = JSON.parse(cleanJson);
+
+            return {
+                story: parsed.story || `【導遊攻略】${location} 是當地熱門去處，建議預留充足時間停留。`,
+                highlights: {
+                    codes: parsed.codes || [],
+                    foods: parsed.foods || [],
+                    menus: parsed.menus || [],
+                    souvenirs: parsed.souvenirs || []
+                }
+            };
+        }
+
+        // 本地關鍵字自動萃取規則 (作為備援與即時解析)
+        function extractLocalKeywords(note) {
+            const codes = note.match(/#[A-Za-z0-9\-]+/g) || [];
+            const foods = [];
+            const menus = [];
+            const souvenirs = [];
+
+            const foodMatch = note.match(/必吃[：:\s]*([^，。,\n]+)/);
+            if (foodMatch) foods.push(foodMatch[1].trim());
+
+            const menuMatch = note.match(/必點[：:\s]*([^，。,\n]+)/);
+            if (menuMatch) menus.push(menuMatch[1].trim());
+
+            const souvenirMatch = note.match(/必買[：:\s]*([^，。,\n]+)/);
+            if (souvenirMatch) souvenirs.push(souvenirMatch[1].trim());
+
+            return { codes, foods, menus, souvenirs };
+        }
+
+        function fallbackSmartAnalysis(location, note) {
+            const hl = extractLocalKeywords(note);
+            return {
+                story: `【導遊攻略】「${location}」周邊建議留意日本停車場最大料金限制，若為熱門時段建議提早 15 分鐘抵達。`,
+                highlights: hl
+            };
+        }
+
+        // ==================== 5. 分頁與工具箱邏輯 ====================
+        function switchMainTab(tab) {
+            const itineraryView = document.getElementById('view-itinerary');
+            const toolsView = document.getElementById('view-tools');
+            const daySelector = document.getElementById('day-selector-container');
+            const navItin = document.getElementById('nav-itinerary');
+            const navTools = document.getElementById('nav-tools');
+
+            if (tab === 'itinerary') {
+                itineraryView.classList.remove('hidden');
+                toolsView.classList.add('hidden');
+                daySelector.classList.remove('hidden');
+                navItin.classList.replace('text-hai', 'text-sumi');
+                navItin.querySelector('i').className = 'ph-fill ph-compass text-2xl';
+                navTools.classList.replace('text-sumi', 'text-hai');
+                navTools.querySelector('i').className = 'ph ph-suitcase-rolling text-2xl';
+            } else {
+                itineraryView.classList.add('hidden');
+                toolsView.classList.remove('hidden');
+                daySelector.classList.add('hidden');
+                navTools.classList.replace('text-hai', 'text-sumi');
+                navTools.querySelector('i').className = 'ph-fill ph-suitcase-rolling text-2xl';
+                navItin.classList.replace('text-sumi', 'text-hai');
+                navItin.querySelector('i').className = 'ph ph-compass text-2xl';
+            }
+        }
+
+        function switchToolSubTab(sub) {
+            document.querySelectorAll('.tool-panel').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tool-${sub}`).classList.remove('hidden');
+
+            document.querySelectorAll('.tool-subtab').forEach(btn => {
+                btn.classList.remove('bg-white', 'text-sumi', 'shadow-sm');
+                btn.classList.add('text-hai');
+            });
+            const activeBtn = document.getElementById(`subtab-${sub}`);
+            activeBtn.classList.add('bg-white', 'text-sumi', 'shadow-sm');
+            activeBtn.classList.remove('text-hai');
+        }
+
+        // ==================== 6. 記帳功能 ====================
+        function renderExpenses() {
+            const total = expenses.reduce((sum, item) => sum + item.amount, 0);
+            const budgetLimit = 150000;
+            const pct = Math.min(100, Math.round((total / budgetLimit) * 100));
+            const twd = Math.round(total * 0.215);
+
+            document.getElementById('budget-spent').textContent = `¥${total.toLocaleString()}`;
+            document.getElementById('budget-twd').textContent = `約 NT$ ${twd.toLocaleString()}`;
+            document.getElementById('budget-bar').style.width = `${pct}%`;
+
+            const list = document.getElementById('expense-list');
+            list.innerHTML = expenses.map(exp => `
+                <div class="bg-white rounded-xl p-3 shadow-xs border border-stone-100 flex items-center justify-between">
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-xs px-2 py-1 rounded-lg bg-washi font-medium">${exp.category}</span>
+                        <span class="text-xs font-medium text-sumi">${exp.title}</span>
+                    </div>
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-xs font-mono font-bold text-sumi">¥${exp.amount.toLocaleString()}</span>
+                        <button onclick="deleteExpense(${exp.id})" class="text-stone-300 hover:text-red-500 transition">
+                            <i class="ph ph-trash text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function addExpense(e) {
+            e.preventDefault();
+            const category = document.getElementById('exp-category').value;
+            const title = document.getElementById('exp-title').value.trim();
+            const amount = parseInt(document.getElementById('exp-amount').value, 10);
+
+            if (!title || isNaN(amount)) return;
+
+            expenses.unshift({
+                id: Date.now(),
+                category,
+                title,
+                amount
+            });
+
+            document.getElementById('exp-title').value = '';
+            document.getElementById('exp-amount').value = '';
+            renderExpenses();
+            showToast('已新增支出紀錄');
+        }
+
+        function deleteExpense(id) {
+            expenses = expenses.filter(e => e.id !== id);
+            renderExpenses();
+        }
+
+        // ==================== 7. 剪貼簿與 Toast 提示 ====================
+        function copyText(text) {
+            const temp = document.createElement('textarea');
+            temp.value = text;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+            showToast(`已複製：${text}`);
+        }
+
+        let toastTimer;
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = msg;
+            toast.classList.remove('hidden');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 2400);
+        }
+
+        // 初始化應用程式
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
